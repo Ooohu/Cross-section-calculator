@@ -1,0 +1,18 @@
+#!/bin/bash
+
+echo "Executing calculator."
+
+#use
+#   chmod 744 executable
+#to grant permission
+
+cd "$(dirname "$0")"
+
+make clean
+
+echo "--------------"
+echo "Starting the program, press Ctrl+C to stop."
+make
+
+echo "--------------"
+echo "The result is shown above!"
