@@ -1,9 +1,8 @@
 cross: cross.o 
 	gcc -Wall *.o -o cross -lm
-	./cross
 
 cross.o: cross.c cross.h
-	gcc -c -Wall cross.c 
+	gcc -g -c -Wall cross.c 
 
 .PHONY: clean
 
