@@ -98,7 +98,7 @@ int main()
 	}
     }
     srand(time(NULL) );//make rand() changes as time goes.
-    z0 = 2*z0 + rmax + (double)rand()/(double)RAND_MAX;     
+    z0 = 2*z0 + 2*rmax + (double)rand()/(double)RAND_MAX;     
     a2 += 2*rmax;
 
     fp=fopen (csv_name, "w");
@@ -116,8 +116,8 @@ int main()
 
 //0.3 Reject or adjust unreasonable trials:
     if(rmin>0.1*a1 || rmin>0.1*a2){//No large balls r<0.1*r_{test region}
-	printf("\nBall is too large (>0.1 test region)," 
-	    "the experiment is canceled.\n");
+	printf("\nBall is too large (> %g)," 
+	    "the experiment is canceled.\n", (a1<a2)?0.1*a1:0.1*a2);
 	exit(1);
     }
     if(rmax>0.1*a1 || rmax>0.1*a2){//Adjust rmax: rmax<=0.1*r_{test region} 
@@ -171,7 +171,7 @@ int main()
 
 	    fprintf(stderr,"	Test region: %g x %g;" 
 		    " Number of balls in test region: %d.\n"
-		    "Trial (r=%g, b=%g) %d/%d is in progress (count to 10):",
+		    "Trial (r=%g, v=%g) %d/%d is in progress (count to 10):",
 		    2*a1, 2*a2, grids ,r ,v ,count , max_count);
 
 	/**Prepare data file for recording collision events**/
@@ -204,7 +204,7 @@ int main()
 		    for ( double s = 0; s < two_pi + string_unit; 
 			    s+= string_unit){
 			//random initial height raised 0~100.000000 times of r.
-			double z1 = z0 + (double)rand()/(double)RAND_MAX*r*100;
+			double z1 = z0 + (double)rand()/(double)RAND_MAX*r*10;
 
 			/***3. time loop: with booster***/		
 			/*Booster: the following variables are for accelerating 
