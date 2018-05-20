@@ -33,7 +33,7 @@ double z (double s, double t){  /*z components of the dynamic equation*/
 
 int main()
 {
-    double two_pi = 3.142;//it was 2*acos(-1.0);length of the string: 2pi.
+    double two_pi = 2*3.142;//it was 2*acos(-1.0);length of the string: 2pi.
 
 /**************************Configuration**********************/
     char folder[]="test";
