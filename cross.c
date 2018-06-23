@@ -39,22 +39,24 @@ int main()
     char folder[]="test";
 
     /*Parameters of the ball*/
-    double rmin=0.04;
-    double rmax=0.04;
+    double rmin=0.01;
+    double rmax=0.06;
     double rstep=0.01;
 
     double vmin=0.1;
-    double vmax=0.8;
-    double vstep=0.1;
+    double vmax=0.1;
+    double vstep=0.005;
 
     /*Setps sizes*/		    
-    double time_factor = 1;//time step = time_factor*r. Initial value is 0.1
+    double time_factor = 0.1;//time step = time_factor*r. Initial value is 0.1
 
-    double phase_factor =1;// step of string element = phase_factor*r
+    double phase_factor = 0.1;// step of string element = phase_factor*r
 
-    double axis_factor = 1; //The size of a grid is: axis_factor*rmin
+   // double axis_factor = 0.1; //The size of a grid is: axis_factor*rmin
 
-    int detail = 0; //set detail equal to 1 to record each collision points.
+    int detail = 1; //set detail equal to 1 to record each collision points.
+
+    int ball = 2; //number of balls dropped.
 
 /*************************************************************/
 /***********************End of Configuration******************/
@@ -80,26 +82,39 @@ int main()
     if ( access (csv_name, F_OK) != -1){
 	printf("\nAn existing file would be replaced" 
 		" unless press Ctrl+c to cancel.\n");
-	sleep(8);
+	//sleep(8);
     }
 
-    double a1 = 0; 
-    double a2 = 0; //a1,a2 label the corner (x,y) of the test region.
+/*    double a1 = 0; 
+    double a2 = 0;//a1,a2 label the corner (+|x|,+|y|) of the test region.
+    double a3 = 0;
+    double a4 = 0;//a3,a4 for corner (-|x|,-|y|)
+*/    
+    double a1=1;
+    double a2=1;
     double z0 = 0; //height of the ball to be determined
+    double z9 = 0;
 
 
 //0.2 Estimate initial start height and size of test region.
 		    //make sure s and t can go through a period.
-    for (double s=0; s<= two_pi+phase_factor*rmin; s+=phase_factor*rmin){ 
-	for (double t=0; t<= two_pi; t+=time_factor*rmin){ 
+/*    for (double s=0; s<= two_pi+phase_factor*rmin; s+=phase_factor*rmin){ 
+	for (double t=0; t<= two_pi+time_factor*rmin; t+=time_factor*rmin){ 
 	    if(x(s,t) > a1) a1 = x(s,t);
 	    if(y(s,t) > a2) a2 = y(s,t);
+	    
+	    if(x(s,t) < a3) a3 = x(s,t);
+	    if(y(s,t) < a4) a4 = y(s,t);
+	    
 	    if(z(s,t) > z0) z0 = z(s,t);
+	    if(z(s,t) < z9) z9 = z(s,t);
 	}
     }
-    srand(time(NULL) );//make rand() changes as time goes.
-    z0 = 2*z0 + 2*rmax + (double)rand()/(double)RAND_MAX;     
-    a2 += 2*rmax;
+*/    srand(time(NULL) );//make rand() changes as time goes.
+
+//    a1 = ((a1<(-1*a3))? -1*a3:a1)+ rmax*(1 + (double)rand()/(double)RAND_MAX);
+//    a2 = ((a2<(-1*a4))? -1*a4:a2)+ rmax*(1 + (double)rand()/(double)RAND_MAX);    
+    z0 = ((z0<(-1*z9))? -1*z9:z0)+ rmax*(1 + (double)rand()/(double)RAND_MAX);
 
     fp=fopen (csv_name, "w");
 	//time resolution: time_factor*r
@@ -107,7 +122,7 @@ int main()
 	//grid resolution: axis_factor*r
     fprintf(fp, " Test region:, %g x %g, String length, < %g\n"
 	    "Trials, time resolution, string resolution,"
-	    "grid resolution, parameter a," 
+	    "number of balls, parameter a," 
 	    "# of balls, velocity, radius, cross-section",
 	    2*a1 , 2*a2,
 	    (a1<a2)? 6.28*a2:6.28*a1 //circumsphere with radius as a1 or a2.
@@ -116,8 +131,8 @@ int main()
 
 //0.3 Reject or adjust unreasonable trials:
     if(rmin>0.1*a1 || rmin>0.1*a2){//No large balls r<0.1*r_{test region}
-	printf("\nBall is too large (> %g)," 
-	    "the experiment is canceled.\n", (a1<a2)?0.1*a1:0.1*a2);
+	printf("\nBall is too large (>%g)," 
+	    "the experiment is canceled.\n", (a1<a2)?a1*0.1:a2*0.1);
 	exit(1);
     }
     if(rmax>0.1*a1 || rmax>0.1*a2){//Adjust rmax: rmax<=0.1*r_{test region} 
@@ -140,18 +155,18 @@ int main()
     for (double r=rmin; r<=rmax; r+=rstep){ 
 
 	/**Adjust steps**/
-	double axis_unit = axis_factor*rmin;
+//	double axis_unit = axis_factor*rmin;
 	double string_unit = phase_factor*r;
 	double time_unit = time_factor*r;
 
 	/**Estimate the number of balls (grids)**/
-	int grids = 0;
+//	int grids = 0;
 
-	for (double x0 = -a1; x0 < a1+axis_unit; x0+=axis_unit){ 
+/*	for (double x0 = -a1; x0 < a1+axis_unit; x0+=axis_unit){ 
 	    for(double y0 = -a2; y0 < a2+axis_unit; y0+=axis_unit) 
 		grids++;
 	}
-
+*/
 /**2. Trails through different velocities**/	
 	for (double v=vmin; v<=vmax; v+=vstep){
 	    
@@ -170,9 +185,9 @@ int main()
 	    int progress=0;
 
 	    fprintf(stderr,"	Test region: %g x %g;" 
-		    " Number of balls in test region: %d.\n"
+		    " Number of balls randomly dropped in test region: %d.\n"
 		    "Trial (r=%g, v=%g) %d/%d is in progress (count to 10):",
-		    2*a1, 2*a2, grids ,r ,v ,count , max_count);
+		    2*a1, 2*a2, ball ,r ,v ,count , max_count);
 
 	/**Prepare data file for recording collision events**/
 	    FILE *dp;
@@ -190,28 +205,29 @@ int main()
 	    }
 
 /***1. Balls' loop (for each trial (given v and r)).***/
-	    for (double x0 = -a1; x0 < a1+axis_unit; x0+=axis_unit) 
-	    {
-		int current_progress = 10*(a1+x0)/(2*a1);
+	    for (int i=0; i < ball; i++)
+	    {	//Random positions inside the test region.
+		double x0=(double)rand()/(double)RAND_MAX*2*a1-a1;//random x0 from (-a1,a1)
+	    	double y0=(double)rand()/(double)RAND_MAX*2*a2-a2;
+		double z1 = z0 + (double)rand()/(double)RAND_MAX*v*two_pi;
+		
+		int current_progress = i/(ball*0.1);
 		if(  current_progress == progress) 
 		    fprintf(stderr,"%d ", progress++);
 
 		int mark_in = in;
 
-		for(double y0 = -a2; y0 < a2+axis_unit; y0+=axis_unit){
-
 		    /***2. String loop: search until collision.***/
 		    for ( double s = 0; s < two_pi + string_unit; 
 			    s+= string_unit){
-			//random initial height raised 0~100.000000 times of r.
-			double z1 = z0 + (double)rand()/(double)RAND_MAX*r*10;
+			//random initial height raised within the distance v*T (T=2pi)
 
 			/***3. time loop: with booster***/		
 			/*Booster: the following variables are for accelerating 
 			  the process*/
-			double begin_time = 0; 
+			double begin_time = (z1-z0)/v;//estimate the beginning time 
 			double time_step = 0.1; //Initial time step 
-			double last_dis= z1*z1 + a1*a1 + a2*a2; 
+			double last_dis= z1*z1 + a1*a1 + a2*a2;//use distance square for calculation.
 			double t=begin_time;
 			double end_time=2*z1/v;
 			double new_end_time;
@@ -265,7 +281,6 @@ int main()
 			}
 		    }
 		    (mark_in == in)? out++: mark_in++;
-		}
 	    }
 //End of one trial with one set of velocity and rdius
 
@@ -279,10 +294,10 @@ int main()
 	   	// "grid resolution, parameter a," 
 	   	// "number of balls, velocity, radius, cross-section",
 	    fprintf(fp, "\n%d,%g,%g,"
-			"%g, %g," 
+			"%d, %g," 
 			"%d,%g,%g,%g",
-		    count++, time_unit, string_unit, 
-		    axis_unit, a0, 
+		    count++, time_unit, string_unit,
+		    ball, a0, 
 		    in+out, v, r, area*in/(in+out) );
 	    if(detail ==1)   fclose(dp);
 	    fclose(fp);
