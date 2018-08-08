@@ -1,7 +1,7 @@
 # Cross-section-calculator
 Calculate cross-section of a cosmic string
 
-Requirement: The graphing is based on Gnuplot.
+Requirement: The graphing function is based on Gnuplot.
 
 Usage: 
 
