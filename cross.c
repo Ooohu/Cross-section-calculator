@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -39,24 +40,25 @@ int main()
     char folder[]="test";
 
     /*Parameters of the ball*/
-    double rmin=0.01;
+    double rmin=0.06;
     double rmax=0.06;
     double rstep=0.01;
 
-    double vmin=0.1;
-    double vmax=0.1;
-    double vstep=0.005;
+    double vmin=0.9;
+    double vmax=0.92;
+    double vstep=0.01;
 
     /*Setps sizes*/		    
-    double time_factor = 0.1;//time step = time_factor*r. Initial value is 0.1
+    double time_factor = 0.01;//time step = time_factor*r. Initial value is 0.1
 
     double phase_factor = 0.1;// step of string element = phase_factor*r
 
    // double axis_factor = 0.1; //The size of a grid is: axis_factor*rmin
 
-    int detail = 1; //set detail equal to 1 to record each collision points.
+    bool detail = false; //set detail equal to 1 to record each collision points.
+    bool fit_line = false;//fit the plot with a given funcrion, see the end of file.
 
-    int ball = 2; //number of balls dropped.
+    int ball = 30; //number of balls dropped.
 
 /*************************************************************/
 /***********************End of Configuration******************/
@@ -67,7 +69,7 @@ int main()
     printf("Start computation. Data will be stored in %s.csv;"
 	    ,folder);
     
-    if(detail ==1){ 
+    if(detail){ 
 	mkdir(folder,0777);
 	printf(" Detail of collision can be found in folder: %s"
 		,folder);       
@@ -192,7 +194,7 @@ int main()
 	/**Prepare data file for recording collision events**/
 	    FILE *dp;
 
-	    if(detail == 1){
+	    if(detail){
 		char file_name[strlen(folder)+sizeof(count)+20];
 
 		sprintf(file_name,"%s/%d.csv",folder,count);
@@ -217,14 +219,13 @@ int main()
 
 		int mark_in = in;
 
-		    /***2. String loop: search until collision.***/
+/***2. String loop: search until collision.***/
 		    for ( double s = 0; s < two_pi + string_unit; 
 			    s+= string_unit){
 			//random initial height raised within the distance v*T (T=2pi)
 
-			/***3. time loop: with booster***/		
-			/*Booster: the following variables are for accelerating 
-			  the process*/
+/***3. time loop: with booster***/		
+	/*Booster: the following variables are used for accelerating the process*/
 			double begin_time = (z1-z0)/v;//estimate the beginning time 
 			double time_step = 0.1; //Initial time step 
 			double last_dis= z1*z1 + a1*a1 + a2*a2;//use distance square for calculation.
@@ -248,7 +249,7 @@ int main()
 			    {	
 				in++;
 				s = two_pi + string_unit;
-				if(detail ==1){
+				if(detail){
 				    //record x,y,time of the ball
 				    fprintf(dp, "%g, %g, %g\n",
 					    x0,y0,t);
@@ -299,36 +300,46 @@ int main()
 		    count++, time_unit, string_unit,
 		    ball, a0, 
 		    in+out, v, r, area*in/(in+out) );
-	    if(detail ==1)   fclose(dp);
+	    if(detail)   fclose(dp);
 	    fclose(fp);
 	}//next v trial. 
     }
 
-    /*Plotting (need to add filter (currently not available) 
-     *for complicated case.)*/
+/*Make a plot.*/
     if (rmin!=rmax || vmin != vmax){
 	FILE *gnuplot = popen("gnuplot", "w");
 	fprintf(gnuplot, "set terminal png\n"
 		"set datafile separator ','\n"
 		"set autoscale fix\n"
-		"set key off\n"
-		"set ylabel 'Cross-section of the string'\n");
+		"set key \n"
+		"set ylabel 'Cross-section of the String'\n"
+		"set output './%s.png'\n",
+		folder);
+
+
 	if (vmin != vmax){//plot cross-section vs. velocity
 
-	    fprintf(gnuplot, "set output './%s.png'\n"
-		    "set xlabel 'Velocity of the ball (unit:c)'\n"
-		    "set title 'Cross-section versus velocity"
-		    "of the balls (r = %g)'\n"
-		    "plot '%s.csv' using 7:9 with lines\n",
-		    folder, rmax,folder);
+		fprintf(gnuplot,"set xlabel 'Velocity of the ball (unit:c)'\n"
+			"set title 'Cross-section versus velocity of the balls (r = %g)'\n",
+			rmax);
+	    if (fit_line){
+		
+		fprintf(gnuplot,"f(x) = a/(x+b)\n"
+			"fit f(x) '%s.csv' u 7:9 via a,b\n"
+			"title_f(a,b) = sprintf('f(x) = %%.2f/(x+%%.2f)',a,b)\n"
+			"plot '%s.csv' using 7:9 with points pointtype 2, f(x) t title_f(a,b)\n",
+			folder, folder);
+	    }
+	    else{
+		fprintf(gnuplot,"plot '%s.csv' using 7:9 with lines\n", folder);
+	    }
 	}
-	if (rmin != rmax){//plot cross-section vs. radius
-	    fprintf(gnuplot, "set output './%s.png'\n"
-		    "set xlabel 'Radius of the ball'\n"
-		    "set title 'Cross-section versus radius" 
-		    "of the balls (v = %g)'\n"
+	else {//plot cross-section vs. radius
+	    fprintf(gnuplot,"set xlabel 'Radius of the ball'\n"
+		    "set title 'Cross-section versus radius of the balls (v = %g)'\n"
 		    "plot '%s.csv' using 8:9 with lines\n",
-		    folder, vmax, folder);
+		    vmax, folder);
 	}
+	    fprintf(gnuplot,"q\n");
     }
 }
