@@ -1,0 +1,28 @@
+set terminal png
+
+set datafile separator ","
+
+set key 
+
+#set logscale y
+
+set ylabel "Cross-section of the cosmic string"
+
+set output "./PLOT.png" #OUTPUT FILE NAME
+
+set xlabel "Velocity of the black hole"
+
+set title "Cosmic String Cross-section of a Black Hole with Radius (r=0.06)"
+
+f(x) = a/(x+b)+c/(x+d)**5+e
+
+#CHOOSE APPROPRIATE *.csv FILE
+#NUMBER AFTER u ARE CORRESPONDING COLUMN FOR x AND f(x), respectively
+
+fit f(x) 'velocity100complete.csv' u 7:9 via a,b,c,d,e 
+
+title_f(a,b,c,d,e) = sprintf('f(x) =%.2f/(x+%.2f)+%.2f/(x+%.2f)**5+%.2f', a,b,c,d,e)
+
+#COLUMN 10 IS THE VALUE OF ERROR
+plot 'velocity100complete.csv' using 7:9:10 with yerrorbars linestyle 7 t "Simulation", f(x) t title_f(a,b,c,d,e)
+
